@@ -142,5 +142,5 @@
   ([client key value value' opts]
    (->> (assoc opts :value value)
         (http-opts client)
-        (http/post (url client) ["cas" key value value'])
+        (http/post (url client) {:body (json/encode ["cas" key value value'])})
         :body)))

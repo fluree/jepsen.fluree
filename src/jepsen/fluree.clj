@@ -100,7 +100,7 @@
         (c/exec :mv "raft-kv" "/etc/init.d/raft-kv")
         (c/su (c/exec :chmod :+x "/etc/init.d/raft-kv"))
         (info "Created service")
-        (let [traced-service-start (future (c/su (c/exec :service :raft-kv :start n (format-ips ips))))
+        (let [traced-service-start (future (c/su (c/exec :service :raft-kv :start n 5)))
               _                    (info "TRACE" traced-service-start)])
         (info "Started service")
         ;; nohup java -jar /opt/raft-kv/raft.jar n (format-ips ips) &
@@ -115,7 +115,9 @@
                      (catch Exception e (info "Successfully shut down")))]
         (info "Shutting down " node)
         (Thread/sleep 3000)
-        (c/su (c/exec :rm :-rf directory "nohup.out"))))
+        ;(c/su (c/exec :rm :-rf directory "nohup.out"))
+        (c/su (c/exec :rm :-rf "nohup.out"))
+        ))
     db/LogFiles
     (log-files [_ test node]
       [logfile])))
