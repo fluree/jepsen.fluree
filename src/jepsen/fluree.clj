@@ -16,7 +16,7 @@
             [jepsen.os.debian :as debian]))
 
 (def directory "/opt")
-(def logfile "/logs/log-2020-03-18.log")
+(def logfile "/logs/log-2020-03-23.log")
 
 ;; has to be /ips.txt in docker
 ;; But using a sample "ips.txt" here

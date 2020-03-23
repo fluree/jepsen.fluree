@@ -1,13 +1,15 @@
 (ns jepsen.raft-ops
   (:refer-clojure :exclude [swap! reset! get set])
   (:require [clojure.core :as core]
+            [clojure.tools.logging :refer :all]
             [clojure.core.reducers :as r]
             [clojure.string :as str]
             [clojure.java.io :as io]
             [clj-http.client :as http]
             [clj-http.util :as http.util]
             [cheshire.core :as json]
-            [slingshot.slingshot :refer [try+ throw+]])
+            [slingshot.slingshot :refer [try+ throw+]]
+            [jepsen.control :as c])
   (:import (com.fasterxml.jackson.core JsonParseException)
            (java.io InputStream)
            (clojure.lang MapEntry)))
@@ -109,6 +111,18 @@
   ([client key]
    (get client key {}))
   ([client key opts]
+   ;(let [_ (info "CLIENT" client)
+   ;      endpoint (url client)
+   ;      _ (info "ENDPOINT" endpoint)
+   ;      body ["read", key]
+   ;      _ (info "BODY " body)
+   ;      res  (try (c/exec :curl
+   ;                        ;:-d (c/lit (json/generate-string body))
+   ;                        (c/lit (str url "/read")))
+   ;                (catch Exception e (info "READ failed: " e)))
+   ;      _ (info "RES READ: " res)]
+   ;  res)
+   ;
    (->> opts
         (remap-keys {:recursive?   :recursive
                      :consistent?  :consistent
@@ -118,7 +132,15 @@
                      :wait-index   :waitIndex})
         (http-opts client)
         (http/post (url client) {:body (json/encode ["read" key])})
-        :body)))
+        :body)
+
+    )
+  )
+
+(comment
+
+  (json/generate-string ["write", 1, 2])
+  )
 
 (defn set
   "Sets the value of a given key to value. Options:
@@ -127,10 +149,25 @@
   ([client key value]
    (set client key value {}))
   ([client key value opts]
-   (->> (assoc opts :value value)
-        (http-opts client)
-        (http/post (url client)  {:body (json/encode ["write" key value])})
-        :body)))
+    (let [_ (info "CLIENT" client)
+          endpoint (url client)
+          _ (info "ENDPOINT" endpoint)
+          body ["write", key, value]
+          _ (info "BODY " body)
+          res  (try (c/exec :curl
+                            ;:-d (c/lit (json/generate-string body))
+                            (c/lit (str url "/read")))
+                    (catch Exception e (info "Write failed: " e)))
+          _ (info "RES WRITE: " res)]
+      res
+      )
+
+   ;(->> (assoc opts :value value)
+   ;     (http-opts client)
+   ;     (http/post (url client)  {:body (json/encode ["write" key value])})
+   ;     :body)
+
+    ))
 
 
 (defn cas
@@ -140,7 +177,18 @@
   ([client key value value']
    (cas client key value value' {}))
   ([client key value value' opts]
-   (->> (assoc opts :value value)
-        (http-opts client)
-        (http/post (url client) {:body (json/encode ["cas" key value value'])})
-        :body)))
+   ;(->> (assoc opts :value value)
+   ;     (http-opts client)
+   ;     (http/post (url client) {:body (json/encode ["cas" key value value'])})
+   ;     :body)
+   (let [_ (info "CLIENT" client)
+         endpoint (url client)
+         _ (info "ENDPOINT" endpoint)
+         res  (try (c/exec :curl
+                           ;:-d (str "[\"cas\", \"" key "\", \"" value "\" \"" value' "\"]")
+                           (c/lit (str url "/read")))
+                   (catch Exception e (info "CAS failed: " e)))
+         _ (info "RES CAS: " res)]
+     res
+     )
+    ))
